@@ -6,21 +6,25 @@
 #include <stack>
 #include <memory>
 
+// base class for a component
 class Component
 {
 public:
-	uint64_t EntityId = uint64_t(-1);
-	inline virtual size_t GetTypeId() const { return size_t(-1); }
+	uint64_t EntityId = uint64_t(-1);									// entity that is attached to this component
+	inline virtual size_t GetTypeId() const { return size_t(-1); }		// a way to get the type ID of this component when all you have is the base class
 
 	virtual ~Component() = default;
 };
 
+// macro to define common code that all components need
+// computes a runtime unique ID for each component using the name
+// NOTE that this ID is not deterministic, a real ECS would hash the name and use a better ID
 #define DEFINE_COMPONENT(T) \
 static const char* GetComponentName() { return #T;}  \
 static size_t GetComponentId() { return reinterpret_cast<size_t>(#T); } \
 inline size_t GetTypeId() const override { return GetComponentId(); }
 
-
+// base class for a generic table of components that the Entity Set can hold and not care about the type
 class ComponentTableBase
 {
 public:
@@ -32,6 +36,7 @@ public:
 	virtual ~ComponentTableBase() = default;
 };
 
+// specific version of table class that stores the entities in a vector.
 template <class T>
 class ComponentTable : public ComponentTableBase
 {
@@ -63,6 +68,7 @@ public:
 		return EntityIds.find(id) != EntityIds.end();
 	}
 
+	// gets or adds a component for this entity ID
 	Component* Get(uint64_t id) override
 	{
 		std::unordered_map<uint64_t, size_t>::iterator entityItr = EntityIds.find(id);
@@ -73,6 +79,7 @@ public:
 	}
 
 protected:
+	// when we remove a component, all the IDs shift, so rebuild the entity ID map
 	void BuildIdCache()
 	{
 		EntityIds.clear();
@@ -80,50 +87,6 @@ protected:
 			EntityIds.insert_or_assign(Components[i].EntityId, i);
 	}
 
+	// a map of entity IDs to component index to make lookups fast
 	std::unordered_map<uint64_t, size_t> EntityIds;
-};
-
-class EntitySet
-{
-public:
-	template <class T>
-	ComponentTable<T>* RegisterComponent()
-	{
-		ComponentTableBase* tablePtr = new ComponentTable<T>();
-		Tables[T::GetComponentId()] = tablePtr;
-
-		return GetComponents<T>();
-	}
-
-	template <class T>
-	ComponentTable<T>* GetComponents()
-	{
-		return reinterpret_cast<ComponentTable<T>*>(Tables[T::GetComponentId()]);
-	}
-
-	template <class T>
-	T* GetComponent(uint64_t id)
-	{
-		auto table = Tables.find(T::GetComponentId());
-		if (table == Tables.end())
-			return nullptr;
-
-		return reinterpret_cast<T*>(table->second->Get(id));
-	}
-
-	uint64_t GetNewEntity();
-
-	void RemoveEntity(uint64_t id);
-
-	virtual ~EntitySet()
-	{
-		for (auto table : Tables)
-			delete(table.second);
-	}
-
-protected:
-	std::unordered_map <size_t, ComponentTableBase*> Tables;
-
-	std::stack<uint64_t> DeadIds;
-	uint64_t NextId = 0;
 };

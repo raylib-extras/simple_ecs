@@ -2,19 +2,20 @@
 
 #include "components.h"
 #include <functional>
+#include "ecs.h"
 
 class System
 {
 public:
-	System(EntitySet& entSet)
-		:EntSet(entSet)
+	System(ECS& ecsContainer)
+		:ECSContainer(ecsContainer)
 	{
 	}
 
-	virtual void Run() = 0;
+	virtual void Update() = 0;
 
 protected:
-	EntitySet& EntSet;
+	ECS& ECSContainer;
 
 	template<class T>
 	inline void DoForEachComponent(std::function<void(T&)> callback)
@@ -22,9 +23,9 @@ protected:
 		if (!callback)
 			return;
 
-		for (T& comp : EntSet.GetComponents<T>()->Components)
+		for (T& comp : ECSContainer.GetComponentTable<T>()->Components)
 			callback(comp);
 	}
 };
 
-#define SYSTEM_CONSTRUCTOR(T) T(EntitySet& entSet) : System(entSet){}
+#define SYSTEM_CONSTRUCTOR(T) T(ECS& ecsContainer) : System(ecsContainer){}

@@ -21,12 +21,16 @@ public:
 	Color TintB = PURPLE;
 	float TintSpeed = 0;
 
+	inline void UpdateColor()
+	{
+		TintParam += GetFrameTime() / TintSpeed;
+	}
+
 	inline Color GetColor()
 	{
 		if (TintSpeed == 0)
 			return Tint;
 
-		TintParam += GetFrameTime() / TintSpeed;
 		if (TintParam >= 1)
 		{
 			TintParam = 1;

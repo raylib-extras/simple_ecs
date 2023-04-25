@@ -1,17 +1,18 @@
 #include "test_systems.h"
 #include "test_components.h"
+#include "ecs.h"
 
 #include "raylib.h"
 #include "raymath.h"
 #include "rlgl.h"
 
-void PlayerUpdateSystem::Run()
+void PlayerUpdateSystem::Update()
 {
 	DoForEachComponent<PlayerInputComponent>([this](PlayerInputComponent& component)
 		{
 			float deltaSpeed = component.LinearSpeed * GetFrameTime();
 
-			TransformComponent* transform = EntSet.GetComponent<TransformComponent>(component.EntityId);
+			TransformComponent* transform = ECSContainer.GetComponent<TransformComponent>(component.EntityId);
 			if (!transform)
 				return;
 
@@ -33,7 +34,7 @@ void PlayerUpdateSystem::Run()
 		});
 }
 
-void RenderSystem::Run()
+void RenderSystem::Update()
 {
 	DoForEachComponent<TransformComponent>([this](TransformComponent& component)
 		{
@@ -42,15 +43,15 @@ void RenderSystem::Run()
 			rlRotatef(component.Angle, 0, 0, 1);
 			
 			Color tint = WHITE;
-			ColorComponent* color = EntSet.GetComponent<ColorComponent>(component.EntityId);
+			ColorComponent* color = ECSContainer.GetComponent<ColorComponent>(component.EntityId);
 			if (color)
 				tint = color->GetColor();
 
-			CircleComponent* circle = EntSet.GetComponent<CircleComponent>(component.EntityId);
+			CircleComponent* circle = ECSContainer.GetComponent<CircleComponent>(component.EntityId);
 			if (circle)
 				DrawCircleV(Vector2Zero(), circle->Radius, tint);
 
-			RectangleComponent* rectangle = EntSet.GetComponent<RectangleComponent>(component.EntityId);
+			RectangleComponent* rectangle = ECSContainer.GetComponent<RectangleComponent>(component.EntityId);
 			if (rectangle)
 				DrawRectangleRec(rectangle->Bounds, tint);
 
@@ -58,16 +59,24 @@ void RenderSystem::Run()
 		});
 }
 
-void SpinnerSystem::Run()
+void SpinnerSystem::Update()
 {
 	DoForEachComponent<SpinnerComponent>([this](SpinnerComponent & component)
 		{
 			float deltaSpeed = component.RotationSpeed * GetFrameTime();
 
-			TransformComponent* transform = EntSet.GetComponent<TransformComponent>(component.EntityId);
+			TransformComponent* transform = ECSContainer.GetComponent<TransformComponent>(component.EntityId);
 			if (!transform)
 				return;
 
 			transform->Angle += deltaSpeed;
+		});
+}
+
+void ColorCyclerSystem::Update()
+{
+	DoForEachComponent<ColorComponent>([this](ColorComponent& component)
+		{
+			component.UpdateColor();
 		});
 }
