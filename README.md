@@ -146,8 +146,8 @@ myECS.Update();
 ```
 
 # More reading
-https://en.wikipedia.org/wiki/Entity_component_system
-https://www.simplilearn.com/entity-component-system-introductory-guide-article
-Entity Component System Overview in 7 Minutes https://www.youtube.com/watch?v=2rW7ALyHaas
-Is There More to Game Architecture than ECS? https://www.youtube.com/watch?v=JxI3Eu5DPwE
+* https://en.wikipedia.org/wiki/Entity_component_system
+* https://www.simplilearn.com/entity-component-system-introductory-guide-article
+* Entity Component System Overview in 7 Minutes https://www.youtube.com/watch?v=2rW7ALyHaas
+* Is There More to Game Architecture than ECS? https://www.youtube.com/watch?v=JxI3Eu5DPwE
 
