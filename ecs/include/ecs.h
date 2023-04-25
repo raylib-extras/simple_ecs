@@ -45,6 +45,16 @@ public:
 		return reinterpret_cast<T*>(table->second->Get(id));
 	}
 
+	template <class T>
+	T* TryGetComponent(uint64_t id)
+	{
+		auto table = Tables.find(T::GetComponentId());
+		if (table == Tables.end())
+			return nullptr;
+
+		return reinterpret_cast<T*>(table->second->TryGet(id));
+	}
+
 	uint64_t GetNewEntity();
 
 	void RemoveEntity(uint64_t id);
@@ -56,7 +66,6 @@ public:
 	}
 
 protected:
-
 	std::stack<uint64_t> DeadIds;
 	uint64_t NextId = 0;
 };

@@ -32,6 +32,7 @@ public:
 	virtual void Remove(uint64_t id) = 0;
 	virtual bool ContainsEntity(uint64_t id) = 0;
 	virtual Component* Get(uint64_t id) = 0;
+	virtual Component* TryGet(uint64_t id) = 0;
 
 	virtual ~ComponentTableBase() = default;
 };
@@ -74,6 +75,16 @@ public:
 		std::unordered_map<uint64_t, size_t>::iterator entityItr = EntityIds.find(id);
 		if (entityItr == EntityIds.end())
 			return Add(id);
+
+		return &Components[entityItr->second];
+	}
+
+	// gets or adds a component for this entity ID
+	Component* TryGet(uint64_t id) override
+	{
+		std::unordered_map<uint64_t, size_t>::iterator entityItr = EntityIds.find(id);
+		if (entityItr == EntityIds.end())
+			return nullptr;
 
 		return &Components[entityItr->second];
 	}

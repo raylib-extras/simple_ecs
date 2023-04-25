@@ -35,3 +35,17 @@ public:
 
 	void Update() override;
 };
+
+class Collision2dComponent;
+
+// detects basic collisions on objects
+class CollisionSystem : public System
+{
+public:
+	SYSTEM_CONSTRUCTOR(CollisionSystem);
+
+	void Update() override;
+
+protected:
+	bool Collision(Collision2dComponent* mover, Collision2dComponent* obstacle);
+};

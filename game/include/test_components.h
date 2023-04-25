@@ -1,7 +1,13 @@
+
+#pragma once
+
 #include "components.h"
 
 #include "raylib.h"
 #include "raymath.h"
+
+#include <functional>
+#include <stdint.h>
 
 class TransformComponent : public Component
 {
@@ -84,5 +90,21 @@ class SpinnerComponent : public Component
 {
 public:
 	DEFINE_COMPONENT(SpinnerComponent);
+
 	float RotationSpeed = 180;
+};
+
+class ECS;
+
+class Collision2dComponent : public Component
+{
+public:
+	DEFINE_COMPONENT(Collision2dComponent);
+
+	// does this move or not? static items are not checked against each other
+	bool IsStatic = false;
+
+	// called when something collides with this
+	//				   thisID    otherID   ECS ref
+	std::function<void(uint64_t, uint64_t, ECS&)> OnCollide;
 };
