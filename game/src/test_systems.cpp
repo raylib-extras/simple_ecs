@@ -34,13 +34,38 @@ void PlayerUpdateSystem::Update()
 		});
 }
 
+
+void PushTransformComponent(const TransformComponent& transform, ECS& ecs)
+{
+	if (transform.Parent != uint64_t(-1))
+	{
+		TransformComponent* parentTransform = ecs.TryGetComponent<TransformComponent>(transform.Parent);
+		if (parentTransform)
+			PushTransformComponent(*parentTransform, ecs);
+	}
+
+	rlPushMatrix();
+	rlTranslatef(transform.Position.x, transform.Position.y, 0);
+	rlRotatef(transform.Angle, 0, 0, 1);
+}
+
+void PopTransformComponent(const TransformComponent& transform, ECS& ecs)
+{
+	rlPopMatrix();
+
+	if (transform.Parent != uint64_t(-1))
+	{
+		TransformComponent* parentTransform = ecs.TryGetComponent<TransformComponent>(transform.Parent);
+		if (parentTransform)
+			PopTransformComponent(*parentTransform, ecs);
+	}
+}
+
 void RenderSystem::Update()
 {
 	DoForEachComponent<TransformComponent>([this](TransformComponent& component)
 		{
-			rlPushMatrix();
-			rlTranslatef(component.Position.x, component.Position.y, 0);
-			rlRotatef(component.Angle, 0, 0, 1);
+			PushTransformComponent(component, ECSContainer);
 			
 			Color tint = WHITE;
 			ColorComponent* color = ECSContainer.TryGetComponent<ColorComponent>(component.EntityId);
@@ -55,7 +80,7 @@ void RenderSystem::Update()
 			if (rectangle)
 				DrawRectangleRec(rectangle->Bounds, tint);
 
-			rlPopMatrix();
+			PopTransformComponent(component, ECSContainer);
 		});
 }
 

@@ -16,6 +16,8 @@ public:
 
 	Vector2 Position = { 0,0 };
 	float Angle = 0;
+
+	uint64_t Parent = uint64_t(-1);
 };
 
 class ColorComponent : public Component

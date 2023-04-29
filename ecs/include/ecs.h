@@ -1,8 +1,9 @@
 #pragma once
 #include "components.h"
+#include <memory>
 
 class System;
-#include <memory>
+
 
 // a container for a set of entities, and a set of registered systems
 class ECS

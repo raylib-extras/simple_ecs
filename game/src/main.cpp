@@ -34,9 +34,9 @@ int main ()
 	ecs.RegisterSystem<RenderSystem>();
 
 	// set up entities
-	// static entity
+	// spinning entity
 	uint64_t blockId = ecs.GetNewEntity();
-	ecs.GetComponent<TransformComponent>(blockId)->Position = Vector2{ 400,300 };
+	ecs.GetComponent<TransformComponent>(blockId)->Position = Vector2{ 800, 400 };
 	ColorComponent* color = ecs.GetComponent<ColorComponent>(blockId);
 	color->Tint = RED;
 	color->TintB = ColorAlpha(PURPLE, 0.25f);
@@ -45,12 +45,20 @@ int main ()
 	ecs.GetComponent<RectangleComponent>(blockId)->Bounds = Rectangle{ -50,-50,100,100 };
 	ecs.GetComponent<SpinnerComponent>(blockId)->RotationSpeed = 90;
 
+	uint64_t child = ecs.GetNewEntity();
+	TransformComponent* transform = ecs.GetComponent<TransformComponent>(child);
+	transform->Position = Vector2{ 150,0 };
+	transform->Parent = blockId;
+	color = ecs.GetComponent<ColorComponent>(child);
+	color->Tint = DARKBLUE;
+	ecs.GetComponent<CircleComponent>(child)->Radius = 20;
+
+	// a static collideable entity
 	uint64_t obstacleId = ecs.GetNewEntity();
 	ecs.GetComponent<TransformComponent>(obstacleId)->Position = Vector2{ 300, 400 };
 	ecs.GetComponent<ColorComponent>(obstacleId)->Tint = DARKGREEN;
 	ecs.GetComponent<RectangleComponent>(obstacleId)->Bounds = Rectangle{ -40,-40, 80, 80 };
 	ecs.GetComponent<Collision2dComponent>(obstacleId)->IsStatic = true;
-
 	
 	// player entity
 	uint64_t playerID = ecs.GetNewEntity();
