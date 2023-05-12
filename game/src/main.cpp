@@ -6,6 +6,8 @@ Raylib ECS Example
 
 #include "test_components.h"
 #include "test_systems.h"
+
+#define _ECS_IMPLEMENTATION
 #include "ecs.h"
 
 int main ()

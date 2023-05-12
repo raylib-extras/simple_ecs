@@ -19,6 +19,13 @@ CD into the directory, run ./premake5 gmake2 and then run make
 #### MacOS
 CD into the directory, run ./premake5.osx gmake2 and then run make
 
+## Using
+ecs.h is  single header library file, and uses the _ECS_IMPLEMENTATION #define to work
+You must have 
+#define _ECS_IMPLEMENTATION
+#include "ecs.h"
+
+In one and only one cpp file.
 
 # ECS Basics
 The goal of an ECS is to break gamplay objects into discrete components and have systems that itterate over those components quickly to do things.

@@ -1,4 +1,13 @@
-#pragma once
+/*
+Simple ECS system
+
+You must use #define _ECS_IMPLEMENTATION before you include ecs.h in one and only one cpp file
+
+*/
+
+
+#ifndef _ECS_H
+#define _ECS_H
 
 #include <memory>
 #include <functional>
@@ -7,7 +16,7 @@
 #include <unordered_map>
 #include <stack>
 
-class ECS;
+class System;
 
 // base class for a component
 class Component
@@ -17,30 +26,6 @@ public:
     inline virtual size_t GetTypeId() const { return size_t(-1); }		// a way to get the type ID of this component when all you have is the base class
 
     virtual ~Component() = default;
-};
-
-class System
-{
-public:
-    System(ECS& ecsContainer)
-        :ECSContainer(ecsContainer)
-    {
-    }
-
-    virtual void Update() = 0;
-
-protected:
-    ECS& ECSContainer;
-
-    template<class T>
-    inline void DoForEachComponent(std::function<void(T&)> callback)
-    {
-        if (!callback)
-            return;
-
-        for (T& comp : ECSContainer.GetComponentTable<T>()->Components)
-            callback(comp);
-    }
 };
 
 // macro to define common code that all components need
@@ -76,7 +61,7 @@ public:
         Components.emplace_back(T());
         T* component = &Components.back();
         component->EntityId = id;
-        EntityIds.insert_or_assign(id, Components.size() - 1);
+        EntityIds[id] = Components.size() - 1;
 
         return component;
     }
@@ -122,7 +107,7 @@ protected:
     {
         EntityIds.clear();
         for (size_t i = 0; i < Components.size(); i++)
-            EntityIds.insert_or_assign(Components[i].EntityId, i);
+            EntityIds[Components[i].EntityId] = i;
     }
 
     // a map of entity IDs to component index to make lookups fast
@@ -140,11 +125,7 @@ public:
 	std::vector<std::unique_ptr<System>> Systems;
 	std::unordered_map <size_t, ComponentTableBase*> Tables;
 
-    inline void Update()
-    {
-        for (auto& system : Systems)
-            system->Update();
-    }
+    void Update();
 
 	template<class T>
 	inline T* RegisterSystem()
@@ -188,29 +169,9 @@ public:
 		return reinterpret_cast<T*>(table->second->TryGet(id));
 	}
 
-    inline uint64_t GetNewEntity()
-    {
-        uint64_t id = NextId;
-        if (!DeadIds.empty())
-        {
-            id = DeadIds.top();
-            DeadIds.pop();
-        }
-        else
-        {
-            NextId++;
-        }
+    uint64_t GetNewEntity();
 
-        return id;
-    }
-
-    inline void RemoveEntity(uint64_t id)
-    {
-        DeadIds.push(id);
-
-        for (auto& table : Tables)
-            table.second->Remove(id);
-    }
+    void RemoveEntity(uint64_t id);
 
 	virtual ~ECS()
 	{
@@ -219,6 +180,62 @@ public:
 	}
 };
 
+class System
+{
+public:
+    System(ECS& ecsContainer)
+        :ECSContainer(ecsContainer)
+    {
+    }
 
+    virtual void Update() = 0;
+
+protected:
+    ECS& ECSContainer;
+
+    template<class T>
+    inline void DoForEachComponent(std::function<void(T&)> callback)
+    {
+        if (!callback)
+            return;
+
+        for (T& comp : ECSContainer.GetComponentTable<T>()->Components)
+            callback(comp);
+    }
+};
 
 #define SYSTEM_CONSTRUCTOR(T) T(ECS& ecsContainer) : System(ecsContainer){}
+
+#endif // _ECS_H
+
+#ifdef _ECS_IMPLEMENTATION
+void ECS::Update()
+{
+    for (auto& system : Systems)
+        system->Update();
+}
+
+void ECS::RemoveEntity(uint64_t id)
+{
+    DeadIds.push(id);
+
+    for (auto& table : Tables)
+        table.second->Remove(id);
+}
+
+inline uint64_t ECS::GetNewEntity()
+{
+    uint64_t id = NextId;
+    if (!DeadIds.empty())
+    {
+        id = DeadIds.top();
+        DeadIds.pop();
+    }
+    else
+    {
+        NextId++;
+    }
+
+    return id;
+}
+#endif //_ECS_IMPLEMENTATION
