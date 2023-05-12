@@ -25,6 +25,6 @@ project (baseName)
     includedirs { "./"}
     includedirs {"src"}
     includedirs {"include"}
+    includedirs {"../ecs"}
     link_raylib()
-	link_to("ecs")
 	-- To link to a lib use link_to("LIB_FOLDER_NAME")

@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <stack>
 
-class System;
+class ECS;
 
 // base class for a component
 class Component
@@ -17,6 +17,30 @@ public:
     inline virtual size_t GetTypeId() const { return size_t(-1); }		// a way to get the type ID of this component when all you have is the base class
 
     virtual ~Component() = default;
+};
+
+class System
+{
+public:
+    System(ECS& ecsContainer)
+        :ECSContainer(ecsContainer)
+    {
+    }
+
+    virtual void Update() = 0;
+
+protected:
+    ECS& ECSContainer;
+
+    template<class T>
+    inline void DoForEachComponent(std::function<void(T&)> callback)
+    {
+        if (!callback)
+            return;
+
+        for (T& comp : ECSContainer.GetComponentTable<T>()->Components)
+            callback(comp);
+    }
 };
 
 // macro to define common code that all components need
@@ -105,15 +129,22 @@ protected:
     std::unordered_map<uint64_t, size_t> EntityIds;
 };
 
-
 // a container for a set of entities, and a set of registered systems
 class ECS
 {
+protected:
+    std::stack<uint64_t> DeadIds;
+    uint64_t NextId = 0;
+
 public:
 	std::vector<std::unique_ptr<System>> Systems;
 	std::unordered_map <size_t, ComponentTableBase*> Tables;
 
-	void Update();
+    inline void ECS::Update()
+    {
+        for (auto& system : Systems)
+            system->Update();
+    }
 
 	template<class T>
 	inline T* RegisterSystem()
@@ -157,43 +188,37 @@ public:
 		return reinterpret_cast<T*>(table->second->TryGet(id));
 	}
 
-	uint64_t GetNewEntity();
+    inline uint64_t ECS::GetNewEntity()
+    {
+        uint64_t id = NextId;
+        if (!DeadIds.empty())
+        {
+            id = DeadIds.top();
+            DeadIds.pop();
+        }
+        else
+        {
+            NextId++;
+        }
 
-	void RemoveEntity(uint64_t id);
+        return id;
+    }
+
+    inline void RemoveEntity(uint64_t id)
+    {
+        DeadIds.push(id);
+
+        for (auto& table : Tables)
+            table.second->Remove(id);
+    }
 
 	virtual ~ECS()
 	{
 		for (auto table : Tables)
 			delete(table.second);
 	}
-
-protected:
-	std::stack<uint64_t> DeadIds;
-	uint64_t NextId = 0;
 };
 
-class System
-{
-public:
-    System(ECS& ecsContainer)
-        :ECSContainer(ecsContainer)
-    {
-    }
 
-    virtual void Update() = 0;
-
-protected:
-    ECS& ECSContainer;
-
-    template<class T>
-    inline void DoForEachComponent(std::function<void(T&)> callback)
-    {
-        if (!callback)
-            return;
-
-        for (T& comp : ECSContainer.GetComponentTable<T>()->Components)
-            callback(comp);
-    }
-};
 
 #define SYSTEM_CONSTRUCTOR(T) T(ECS& ecsContainer) : System(ecsContainer){}
