@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "components.h"
+#include "ecs.h"
 
 #include "raylib.h"
 #include "raymath.h"

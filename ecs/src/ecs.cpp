@@ -1,5 +1,4 @@
 #include "ecs.h"
-#include "systems.h"
 
 void ECS::Update()
 {

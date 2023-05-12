@@ -52,7 +52,6 @@ A system is something that itterates one or more component types and does someth
 ## ECS
 This is simply a container for a set of component tables and registersed systems. It's all the data and logic that makes an ECS instance. It's a class because you may have multiple ECS systems for different uses (multiple rooms on a server for instance).
 
-
 # Code Structure
 
 ## ECS library
