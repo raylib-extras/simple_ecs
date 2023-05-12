@@ -140,7 +140,7 @@ public:
 	std::vector<std::unique_ptr<System>> Systems;
 	std::unordered_map <size_t, ComponentTableBase*> Tables;
 
-    inline void ECS::Update()
+    inline void Update()
     {
         for (auto& system : Systems)
             system->Update();
@@ -188,7 +188,7 @@ public:
 		return reinterpret_cast<T*>(table->second->TryGet(id));
 	}
 
-    inline uint64_t ECS::GetNewEntity()
+    inline uint64_t GetNewEntity()
     {
         uint64_t id = NextId;
         if (!DeadIds.empty())
