@@ -66,23 +66,36 @@ public:
         return component;
     }
 
-    void Remove(uint64_t id) override
+    inline void Remove(uint64_t id) override
     {
-        auto slot = EntityIds.find(id);
+        if (Components.empty())
+            return;
+
+        const auto slot = EntityIds.find(id);
         if (slot == EntityIds.end())
             return;
 
-        Components.erase(Components.begin() + slot->second);
-        BuildIdCache();
+        // quick swap delete.
+        // we get the last item in the list and copy it into the slot we want to delete, then delete off the end.
+        // this prevents all the following items from having 'side down' into the empty slots
+		const auto& componentToDelete = Components[slot->second];
+		const auto& endComponent = Components[Components.size() - 1];
+
+        Components[slot->second] = endComponent;
+
+        EntityIds[componentToDelete.EntityId] = slot->second;
+        EntityIds.erase(slot);
+
+        Components.erase(Components.begin() + (Components.size()-1));
     }
 
-    bool ContainsEntity(uint64_t id) override
+    inline bool ContainsEntity(uint64_t id) override
     {
         return EntityIds.find(id) != EntityIds.end();
     }
 
     // gets or adds a component for this entity ID
-    Component* Get(uint64_t id) override
+    inline Component* Get(uint64_t id) override
     {
         std::unordered_map<uint64_t, size_t>::iterator entityItr = EntityIds.find(id);
         if (entityItr == EntityIds.end())
@@ -92,7 +105,7 @@ public:
     }
 
     // gets or adds a component for this entity ID
-    Component* TryGet(uint64_t id) override
+    inline Component* TryGet(uint64_t id) override
     {
         std::unordered_map<uint64_t, size_t>::iterator entityItr = EntityIds.find(id);
         if (entityItr == EntityIds.end())
@@ -102,13 +115,6 @@ public:
     }
 
 protected:
-    // when we remove a component, all the IDs shift, so rebuild the entity ID map
-    void BuildIdCache()
-    {
-        EntityIds.clear();
-        for (size_t i = 0; i < Components.size(); i++)
-            EntityIds[Components[i].EntityId] = i;
-    }
 
     // a map of entity IDs to component index to make lookups fast
     std::unordered_map<uint64_t, size_t> EntityIds;
@@ -135,7 +141,7 @@ public:
 	}
 
 	template <class T>
-	ComponentTable<T>* RegisterComponent()
+    inline ComponentTable<T>* RegisterComponent()
 	{
 		ComponentTableBase* tablePtr = new ComponentTable<T>();
 		Tables[T::GetComponentId()] = tablePtr;
@@ -144,13 +150,13 @@ public:
 	}
 
 	template <class T>
-	ComponentTable<T>* GetComponentTable()
+    inline ComponentTable<T>* GetComponentTable()
 	{
 		return reinterpret_cast<ComponentTable<T>*>(Tables[T::GetComponentId()]);
 	}
 
 	template <class T>
-	T* GetComponent(uint64_t id)
+    inline T* GetComponent(uint64_t id)
 	{
 		auto table = Tables.find(T::GetComponentId());
 		if (table == Tables.end())
@@ -160,7 +166,7 @@ public:
 	}
 
 	template <class T>
-	T* TryGetComponent(uint64_t id)
+    inline T* TryGetComponent(uint64_t id)
 	{
 		auto table = Tables.find(T::GetComponentId());
 		if (table == Tables.end())
@@ -173,11 +179,7 @@ public:
 
     void RemoveEntity(uint64_t id);
 
-	virtual ~ECS()
-	{
-		for (auto table : Tables)
-			delete(table.second);
-	}
+    virtual ~ECS();
 };
 
 class System
@@ -213,6 +215,12 @@ void ECS::Update()
 {
     for (auto& system : Systems)
         system->Update();
+}
+
+ECS::~ECS()
+{
+	for (auto table : Tables)
+		delete(table.second);
 }
 
 void ECS::RemoveEntity(uint64_t id)
