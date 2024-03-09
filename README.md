@@ -96,7 +96,7 @@ myECS.RegisterComponent<YourComponent>();
 Entities are just an ID, so they are created with a call to GetNewEntity() on the ECS.
 
 ```
-uint64_t newEntity = myECS..GetNewEntity();
+uint64_t newEntity = myECS.GetNewEntity();
 ```
 
 ## Adding components to entities
